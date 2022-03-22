@@ -11,6 +11,7 @@ export function createGetter(path) {
 
     for (const value of keys) {
       pointer = pointer[value];
+
       if (pointer === undefined) break;
     }
 
