@@ -8,13 +8,13 @@ export function trimSymbols(string, size) {
   let counter = 0;
   let result = "";
 
-  for (const c of string) {
-    counter += c === result[result.length - 1] ? 1 : -counter;
+  for (const char of string) {
+    counter += char === result[result.length - 1] ? 1 : -counter;
     if (counter > size - 1) {
       continue;
     }
 
-    result += c;
+    result += char;
   }
 
   return result;
