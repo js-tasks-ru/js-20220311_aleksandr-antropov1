@@ -9,8 +9,10 @@ export function createGetter(path) {
   return function (obj) {
     let pointer = obj;
 
-    for (let i = 0; i < keys.length && pointer !== undefined; i++) {
-      pointer = pointer[keys[i]];
+    for (const value of keys) {
+      pointer = pointer[value];
+
+      if (pointer === undefined) break;
     }
 
     return pointer;
