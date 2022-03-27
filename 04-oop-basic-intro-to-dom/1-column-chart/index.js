@@ -1,80 +1,103 @@
 export default class ColumnChart {
+  subElements = {};
   chartHeight = 50;
 
-  constructor(options) {
-    this.options = options;
-
-    if (options) {
-      const { data = [], label, link, value, formatHeading } = options;
-
-      this.data = this._getColumnProps(data);
-      this.label = label;
-      this.value = formatHeading ? formatHeading(value) : value;
-      this.link = link;
-    }
-
+  constructor({
+    data = [],
+    label = "",
+    link = "",
+    value = 0,
+    formatHeading = (arg) => arg,
+  } = {}) {
+    this.data = data;
+    this.label = label;
+    this.value = formatHeading ? formatHeading(value) : value;
+    this.link = link;
+    console.log("c");
     this.render();
   }
 
   destroy() {
-    this.remove();
+    this.element.remove();
+    this.element = null;
+    this.subElements = {};
   }
 
   remove() {
     this.element.remove();
   }
 
-  getTemplate() {
-    if (!this.options) {
-      return `<div class='column-chart_loading'></div>`;
-    }
-
-    return `<div class="column-chart" style="--chart-height: 50">
+  get template() {
+    return `<div class="column-chart column-chart_loading" style="--chart-height: ${
+      this.chartHeight
+    }">
       <div class="column-chart__title">
         Total ${this.label}
-        ${
-          this.link !== undefined
-            ? `<a href="${this.link}" class="column-chart__link">
-              View all
-            </a>`
-            : ""
-        }
+        ${this.getLink()}
       </div>
       <div class="column-chart__container">
         <div data-element="header" class="column-chart__header">${
           this.value
         }</div>
         <div data-element="body" class="column-chart__chart">
-          ${
-            this.data.length === 0
-              ? `<img src='charts-skeleton.svg' alt='No data' />`
-              : this.data
-                  .map(
-                    ({ value, percent }) =>
-                      `<div style="--value: ${value}" data-tooltip="${percent}"></div>`
-                  )
-                  .join("")
-          }
+          ${this.getData()}
         </div>
       </div>`;
   }
 
+  getLink() {
+    if (!this.link) return "";
+
+    return `<a href="${this.link}" class="column-chart__link">
+      View all
+    </a>`;
+  }
+
+  getData() {
+    return this.getColumnProps(this.data)
+      .map(
+        ({ value, percent }) =>
+          `<div style="--value: ${value}" data-tooltip="${percent}"></div>`
+      )
+      .join("");
+  }
+
   render() {
     const wrapper = document.createElement("div");
-    wrapper.innerHTML = this.getTemplate();
 
-    this.element = wrapper.childNodes[0];
+    wrapper.innerHTML = this.template;
+
+    this.element = wrapper.firstElementChild;
+
+    if (this.data.length > 0) {
+      this.element.classList.remove("column-chart_loading");
+    }
+
+    this.subElements = this.getSubElements();
+  }
+
+  getSubElements() {
+    const result = {};
+
+    const subElements = this.element.querySelectorAll("[data-element]");
+
+    for (let element of subElements) {
+      const name = element.dataset.element;
+      result[name] = element;
+    }
+
+    return result;
   }
 
   update(data) {
     this.data = data;
 
-    this.render();
+    this.subElements.body.innerHTML = this.getData();
   }
 
-  _getColumnProps(data) {
+  getColumnProps(data) {
     const maxValue = Math.max(...data);
-    const scale = 50 / maxValue;
+    const scale = this.chartHeight / maxValue;
 
     return data.map((item) => {
       return {
