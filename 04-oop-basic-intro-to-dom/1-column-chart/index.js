@@ -13,7 +13,7 @@ export default class ColumnChart {
     this.label = label;
     this.value = formatHeading ? formatHeading(value) : value;
     this.link = link;
-    console.log("c");
+
     this.render();
   }
 
