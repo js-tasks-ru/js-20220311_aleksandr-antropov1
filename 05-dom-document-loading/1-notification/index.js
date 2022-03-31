@@ -61,12 +61,7 @@ export default class NotificationMessage {
   }
 
   destroy() {
-    if (this.element) {
-      this.element.remove();
-      this.element = null;
-    }
-    if (NotificationMessage.activeMessage === this) {
-      NotificationMessage.activeMessage = null;
-    }
+    this.remove();
+    this.element = null;
   }
 }

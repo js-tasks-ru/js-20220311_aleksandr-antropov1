@@ -19,11 +19,10 @@ export default class SortableTable {
           : "";
 
       const sortArrow = dataOrder
-        ? `<span data-element="arrow" class="sortable-table__sort-arrow"> <span class="sort-arrow"></span> </span>`
+        ? `<span data-element="arrow" class="sortable-table__sort-arrow"><span class="sort-arrow"></span></span>`
         : "";
 
-      return `
-      <div class="sortable-table__cell" data-id="${column.id}" data-sortable="${column.sortable}" ${dataOrder}>
+      return `<div class="sortable-table__cell" data-id="${column.id}" data-sortable="${column.sortable}" ${dataOrder}>
         <span>${column.title}</span>
         ${sortArrow}
       </div>`;
@@ -33,31 +32,27 @@ export default class SortableTable {
   }
 
   get body() {
-    let body = "";
+    const rows = this.sortedData.map((row) => this.getBodyRow(row));
 
-    for (const row of this.sortedData) {
-      const result = this.headerConfig.map((column) => {
-        const renderFn = column.template;
+    return rows.join("");
+  }
 
-        if (typeof renderFn === "function") {
-          return renderFn(row[column.id]);
-        } else {
-          return `<div class='sortable-table__cell'>${row[column.id]}</div>`;
-        }
-      });
+  getBodyRow(row) {
+    const columns = this.headerConfig.map((column) => {
+      const value = row[column.id];
+      const renderFn =
+        column.template ??
+        ((value) => `<div class='sortable-table__cell'>${value}</div>`);
+      return renderFn(value);
+    });
 
-      body += `
-        <div class="sortable-table__row">
-          ${result.join("")}
-        </div>`;
-    }
-
-    return body;
+    return `<div class="sortable-table__row">
+      ${columns.join("")}
+    </div>`;
   }
 
   get template() {
-    return `
-    <div class="sortable-table">
+    return `<div class="sortable-table">
       <div data-element="header" class="sortable-table__header sortable-table__row">
         ${this.header}
       </div>
@@ -75,22 +70,25 @@ export default class SortableTable {
 
     const sortType = colConfig?.sortType;
 
+    const directions = {
+      asc: 1,
+      desc: -1,
+    };
+
+    const direction = directions[this.sortDirection];
+
     return (a, b) => {
-      let result = 0;
-
-      if (sortType === "number" || sortType === "date") {
-        result = a[this.sortField] - b[this.sortField];
-      } else if (sortType === "string") {
-        result = a[this.sortField].localeCompare(
-          b[this.sortField],
-          ["ru", "en"],
-          {
-            caseFirst: "upper",
-          }
-        );
+      switch (sortType) {
+        case "string":
+          return (
+            direction *
+            a[this.sortField].localeCompare(b[this.sortField], ["ru", "en"], {
+              caseFirst: "upper",
+            })
+          );
+        default:
+          return direction * (a[this.sortField] - b[this.sortField]);
       }
-
-      return result * (this.sortDirection === "asc" ? 1 : -1);
     };
   }
 
