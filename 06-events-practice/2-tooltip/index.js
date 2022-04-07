@@ -6,6 +6,26 @@ class Tooltip {
 
   static instance = null;
 
+  handlePointerOver = (event) => {
+    const textWithTooltip = event.target.closest("[data-tooltip]");
+
+    if (!textWithTooltip) return;
+
+    this.render(textWithTooltip.dataset.tooltip);
+
+    document.addEventListener("pointermove", this.handlePointerMove);
+  };
+
+  handlePointerMove = (event) => {
+    this.element.style.left = event.clientX + this.offset.x + "px";
+    this.element.style.top = event.clientY + this.offset.y + "px";
+  };
+
+  handlePointerOut = () => {
+    document.removeEventListener("pointerout", this.handlePointerMove);
+    this.remove();
+  };
+
   constructor() {
     if (Tooltip.instance) return Tooltip.instance;
 
@@ -13,31 +33,8 @@ class Tooltip {
   }
 
   initialize() {
-    let textWithTooltip;
-
-    document.addEventListener("pointerover", (event) => {
-      textWithTooltip = event.target.closest("[data-tooltip]");
-
-      if (textWithTooltip) {
-        this.render(textWithTooltip.dataset.tooltip);
-
-        this.element.style.position = "absolute";
-
-        textWithTooltip.onpointermove = (event) => {
-          this.element.style.left = event.clientX + this.offset.x + "px";
-          this.element.style.top = event.clientY + this.offset.y + "px";
-        };
-      }
-    });
-
-    document.addEventListener("pointerout", () => {
-      if (textWithTooltip) {
-        textWithTooltip.onpointermove = null;
-        textWithTooltip = null;
-
-        this.remove();
-      }
-    });
+    document.addEventListener("pointerover", this.handlePointerOver);
+    document.addEventListener("pointerout", this.handlePointerOut);
   }
 
   render(text = "") {
@@ -45,6 +42,7 @@ class Tooltip {
 
     wrapper.innerHTML = `<div class="tooltip">${text}</div>`;
     this.element = wrapper.firstElementChild;
+    this.element.style.position = "absolute";
 
     document.body.append(this.element);
   }
@@ -59,6 +57,9 @@ class Tooltip {
     this.remove();
     this.element = null;
     Tooltip.instance = null;
+    document.removeEventListener("pointerover", this.handlePointerOver);
+    document.removeEventListener("pointermove", this.handlePointerMove);
+    document.removeEventListener("pointerout", this.handlePointerOut);
   }
 }
 
