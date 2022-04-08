@@ -1,6 +1,33 @@
 export default class DoubleSlider {
   subElements = {};
 
+  handlePointerDown = (event) => {
+    document.removeEventListener("pointermove", this.handlePointerMove);
+
+    const element = event.target;
+    const isLeft = element === this.subElements.left;
+    const isRight = element === this.subElements.right;
+
+    if (isLeft || isRight) {
+      const { left, width } = this.subElements.range.getBoundingClientRect();
+
+      this.handlePointerMove = (event) =>
+        this.handleMove(isLeft, left, width, event);
+
+      document.addEventListener("pointermove", this.handlePointerMove);
+    }
+  };
+
+  handlePointerUp = () => {
+    document.removeEventListener("pointermove", this.handlePointerMove);
+
+    if (this.element) {
+      this.element.dispatchEvent(
+        new CustomEvent("range-select", { detail: this.selected })
+      );
+    }
+  };
+
   constructor({
     min = 0,
     max = 0,
@@ -56,33 +83,8 @@ export default class DoubleSlider {
   }
 
   initEventListeners() {
-    let handler;
-
-    this.element.addEventListener("pointerdown", (event) => {
-      document.removeEventListener("pointermove", handler);
-
-      const element = event.target;
-      const isLeft = element === this.subElements.left;
-      const isRight = element === this.subElements.right;
-
-      if (isLeft || isRight) {
-        const { left, width } = this.subElements.range.getBoundingClientRect();
-
-        handler = (event) => this.handleMove(isLeft, left, width, event);
-
-        document.addEventListener("pointermove", handler);
-      }
-    });
-
-    document.addEventListener("pointerup", () => {
-      document.removeEventListener("pointermove", handler);
-
-      if (this.element) {
-        this.element.dispatchEvent(
-          new CustomEvent("range-select", { detail: this.selected })
-        );
-      }
-    });
+    this.element.addEventListener("pointerdown", this.handlePointerDown);
+    document.addEventListener("pointerup", this.handlePointerUp);
   }
 
   handleMove(isLeft, startX, width, event) {
@@ -134,6 +136,9 @@ export default class DoubleSlider {
   }
 
   destroy() {
+    this.element.removeEventListener("pointerdown", this.handlePointerDown);
+    document.removeEventListener("pointermove", this.handlePointerMove);
+    document.removeEventListener("pointerup", this.handlePointerUp);
     this.remove();
     this.element = null;
   }
