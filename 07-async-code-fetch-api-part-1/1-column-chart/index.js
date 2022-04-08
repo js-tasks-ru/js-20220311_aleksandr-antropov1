@@ -85,30 +85,25 @@ export default class ColumnChart {
   }
 
   async update(from, to) {
-    try {
-      this.element.classList.add("column-chart_loading");
+    this.element.classList.add("column-chart_loading");
 
-      let query = "?";
-      query += "from=" + encodeURIComponent(from.toISOString());
-      query += "&to=" + encodeURIComponent(to.toISOString());
+    let query = "?";
+    query += "from=" + encodeURIComponent(from.toISOString());
+    query += "&to=" + encodeURIComponent(to.toISOString());
 
-      const response = await fetch(this.url + query);
-      const data = await response.json();
+    const data = await fetchJson(this.url + query);
 
-      this.data = Object.values(data);
+    this.data = Object.values(data);
 
-      if (this.data.length > 0) {
-        this.element.classList.remove("column-chart_loading");
-        this.value = this.data.reduce((result, current) => result + current, 0);
+    if (this.data.length > 0) {
+      this.element.classList.remove("column-chart_loading");
+      this.value = this.data.reduce((result, current) => result + current, 0);
 
-        this.subElements.header.innerHTML = this.formatHeading(this.value);
-        this.subElements.body.innerHTML = this.getData();
-      }
-
-      return data;
-    } catch (e) {
-      console.error(e);
+      this.subElements.header.innerHTML = this.formatHeading(this.value);
+      this.subElements.body.innerHTML = this.getData();
     }
+
+    return data;
   }
 
   getColumnProps(data) {
