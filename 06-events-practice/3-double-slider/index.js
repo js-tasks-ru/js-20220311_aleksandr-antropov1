@@ -131,12 +131,12 @@ export default class DoubleSlider {
 
   remove() {
     if (this.element) {
+      this.element.removeEventListener("pointerdown", this.handlePointerDown);
       this.element.remove();
     }
   }
 
   destroy() {
-    this.element.removeEventListener("pointerdown", this.handlePointerDown);
     document.removeEventListener("pointermove", this.handlePointerMove);
     document.removeEventListener("pointerup", this.handlePointerUp);
     this.remove();

@@ -42,7 +42,6 @@ class Tooltip {
 
     wrapper.innerHTML = `<div class="tooltip">${text}</div>`;
     this.element = wrapper.firstElementChild;
-    this.element.style.position = "absolute";
 
     document.body.append(this.element);
   }

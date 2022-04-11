@@ -14,7 +14,7 @@ export default class ColumnChart {
     value = 0,
     formatHeading = (arg) => arg,
   } = {}) {
-    this.url = url;
+    this.url = new URL(url, BACKEND_URL);
     this.label = label;
     this.formatHeading = formatHeading;
     this.value = this.formatHeading(value);
@@ -85,30 +85,20 @@ export default class ColumnChart {
   }
 
   async update(from, to) {
-    try {
-      this.element.classList.add("column-chart_loading");
+    this.url.searchParams.set("from", from.toISOString());
+    this.url.searchParams.set("to", to.toISOString());
 
-      let query = "?";
-      query += "from=" + encodeURIComponent(from.toISOString());
-      query += "&to=" + encodeURIComponent(to.toISOString());
+    this.element.classList.add("column-chart_loading");
+    const data = await fetchJson(this.url);
+    this.element.classList.remove("column-chart_loading");
 
-      const response = await fetch(this.url + query);
-      const data = await response.json();
+    this.data = Object.values(data);
 
-      this.data = Object.values(data);
+    this.value = this.data.reduce((result, current) => result + current, 0);
+    this.subElements.header.innerHTML = this.formatHeading(this.value);
+    this.subElements.body.innerHTML = this.getData();
 
-      if (this.data.length > 0) {
-        this.element.classList.remove("column-chart_loading");
-        this.value = this.data.reduce((result, current) => result + current, 0);
-
-        this.subElements.header.innerHTML = this.formatHeading(this.value);
-        this.subElements.body.innerHTML = this.getData();
-      }
-
-      return data;
-    } catch (e) {
-      console.error(e);
-    }
+    return data;
   }
 
   getColumnProps(data) {
