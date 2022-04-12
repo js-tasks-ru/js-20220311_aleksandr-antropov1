@@ -6,28 +6,24 @@ export default class SortableTable {
   data = [];
   subElements = {};
 
-  handleScroll = () => {
-    clearTimeout(this.debounceId);
+  handleScroll = async () => {
+    const { bottom } = this.element.getBoundingClientRect();
 
-    this.debounceId = setTimeout(async () => {
-      const { bottom } = this.element.getBoundingClientRect();
-
-      if (
-        document.documentElement.clientHeight >= bottom &&
-        !this.isLoading &&
-        !this.isSortLocally
-      ) {
-        this.start = this.end;
-        this.end = this.end + this.step;
-        const data = await this.loadData(
-          this.sorted.id,
-          this.sorted.order,
-          this.start,
-          this.end
-        );
-        this.addRows(data);
-      }
-    }, 100);
+    if (
+      document.documentElement.clientHeight >= bottom &&
+      !this.isLoading &&
+      !this.isSortLocally
+    ) {
+      this.start = this.end;
+      this.end = this.end + this.step;
+      const data = await this.loadData(
+        this.sorted.id,
+        this.sorted.order,
+        this.start,
+        this.end
+      );
+      this.addRows(data);
+    }
   };
 
   handleSort = async (event) => {
@@ -270,7 +266,7 @@ export default class SortableTable {
     }
   }
 
-  async sortOnClient(id, order) {
+  sortOnClient(id, order) {
     const sortFn = this.getSortFn(id, order);
     this.data.sort(sortFn);
     this.subElements.body.innerHTML = this.getBodyRows(this.data);
