@@ -4,18 +4,17 @@ import fetchJson from "./utils/fetch-json.js";
 const IMGUR_CLIENT_ID = "28aaa2e823b03b1";
 const BACKEND_URL = "https://course-js.javascript.ru";
 
-const DEFAULT_INFO = {
-  title: "",
-  description: "",
-  images: [],
-  price: "",
-  discount: "",
-  quantity: "",
-  status: 0,
-};
-
 export default class ProductForm {
   subElements = [];
+  defaultFormData = {
+    title: "",
+    description: "",
+    images: [],
+    price: "",
+    discount: "",
+    quantity: "",
+    status: 0,
+  };
 
   save = (event) => {
     if (event) {
@@ -164,7 +163,7 @@ export default class ProductForm {
 
   async loadProductInfo() {
     if (!this.productId) {
-      return DEFAULT_INFO;
+      return this.defaultFormData;
     }
 
     const url = new URL("api/rest/products", BACKEND_URL);
