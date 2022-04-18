@@ -94,14 +94,26 @@ export default class Page {
   }
 
   initEventListeners(rangePickerElement) {
-    rangePickerElement.addEventListener("date-select", (event) => {
+    rangePickerElement.addEventListener("date-select", async (event) => {
       const { from, to } = event.detail;
 
       this.ordersChart.update(from, to);
       this.salesChart.update(from, to);
       this.customersChart.update(from, to);
-      // this.sortableTable.updateRange(from, to); // какой-то метод, который обновляет для таблицы диапазон дат
+      this.updateTable(from, to);
     });
+  }
+
+  // Собственный метод для обновления таблицы
+  async updateTable(from, to) {
+    this.sortableTable.url.searchParams.set("from", from.toISOString());
+    this.sortableTable.url.searchParams.set("to", to.toISOString());
+
+    const data = await this.sortableTable.loadData(
+      this.sortableTable.sorted.id,
+      this.sortableTable.sorted.order
+    );
+    this.sortableTable.renderRows(data);
   }
 
   getSubElements(element) {
