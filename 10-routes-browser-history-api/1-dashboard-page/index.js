@@ -9,15 +9,9 @@ const BACKEND_URL = "https://course-js.javascript.ru/";
 
 export default class Page {
   subElements = {};
+  components = {};
 
-  constructor() {
-    const monthAgo = new Date(new Date().setMonth(new Date().getMonth() - 1));
-    const today = new Date();
-
-    this.createComponents(monthAgo, today);
-  }
-
-  getTemplate() {
+  get template() {
     return `
     <div class="dashboard full-height flex-column">
       <div class="content__top-panel">
@@ -25,9 +19,9 @@ export default class Page {
         <div data-element='rangePicker'></div>
       </div>
       <div class="dashboard__charts">
-        <div data-element='ordersChart'></div>
-        <div data-element='salesChart'></div>
-        <div data-element='customersChart'></div>
+        <div data-element='ordersChart' class="dashboard__chart_orders"></div>
+        <div data-element='salesChart' class="dashboard__chart_sales"></div>
+        <div data-element='customersChart' class="dashboard__chart_customers"></div>
       </div>
       <h3 class="block-title">Лидеры продаж</h3>
         <div data-element='sortableTable'></div>
@@ -37,71 +31,85 @@ export default class Page {
 
   render() {
     const wrapper = document.createElement("div");
-
-    wrapper.innerHTML = this.getTemplate();
+    wrapper.innerHTML = this.template;
     this.element = wrapper.firstElementChild;
 
     this.subElements = this.getSubElements(this.element);
-    this.appendComponents(this.subElements);
-    this.initEventListeners(this.rangePicker.element);
+
+    this.components = this.initComponents();
+    this.renderComponents();
+    this.initEventListeners();
 
     return this.element;
   }
 
-  createComponents(from, to) {
-    this.rangePicker = new RangePicker({ from, to });
+  initComponents() {
+    const from = new Date(new Date().setMonth(new Date().getMonth() - 1));
+    const to = new Date();
 
-    this.ordersChart = new ColumnChart({
+    const rangePicker = new RangePicker({ from, to });
+
+    const ordersChart = new ColumnChart({
       label: "Заказы",
       link: "sales",
       url: "api/dashboard/orders",
       range: { from, to },
     });
-    this.ordersChart.element.classList.add("dashboard__chart_orders");
 
     const formatter = new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 0,
     });
-    this.salesChart = new ColumnChart({
+
+    const salesChart = new ColumnChart({
       label: "Продажи",
       formatHeading: (data) => formatter.format(data),
       url: "api/dashboard/sales",
       range: { from, to },
     });
-    this.salesChart.element.classList.add("dashboard__chart_sales");
 
-    this.customersChart = new ColumnChart({
+    const customersChart = new ColumnChart({
       label: "Клиенты",
       url: "api/dashboard/customers",
       range: { from, to },
     });
-    this.customersChart.element.classList.add("dashboard__chart_customers");
 
-    this.sortableTable = new SortableTable(header, {
+    const sortableTable = new SortableTable(header, {
       url: "api/dashboard/bestsellers",
       isSortLocally: true,
     });
+
+    return {
+      rangePicker,
+      ordersChart,
+      salesChart,
+      customersChart,
+      sortableTable,
+    };
   }
 
-  appendComponents(subElements) {
-    subElements.rangePicker.append(this.rangePicker.element);
-    subElements.ordersChart.append(this.ordersChart.element);
-    subElements.salesChart.append(this.salesChart.element);
-    subElements.customersChart.append(this.customersChart.element);
-    subElements.sortableTable.append(this.sortableTable.element);
+  renderComponents() {
+    for (const componentName of Object.keys(this.components)) {
+      const root = this.subElements[componentName];
+      const element = this.components[componentName].element;
+
+      root.append(element);
+    }
   }
 
-  initEventListeners(rangePickerElement) {
-    rangePickerElement.addEventListener("date-select", async (event) => {
-      const { from, to } = event.detail;
+  initEventListeners() {
+    this.components.rangePicker.element.addEventListener(
+      "date-select",
+      (event) => {
+        const { from, to } = event.detail;
 
-      this.ordersChart.update(from, to);
-      this.salesChart.update(from, to);
-      this.customersChart.update(from, to);
-      this.updateTable(from, to);
-    });
+        this.ordersChart.update(from, to);
+        this.salesChart.update(from, to);
+        this.customersChart.update(from, to);
+        this.updateTable(from, to);
+      }
+    );
   }
 
   // Собственный метод для обновления таблицы
@@ -136,5 +144,11 @@ export default class Page {
   destroy() {
     this.remove();
     this.subElements = {};
+
+    for (const component in this.components) {
+      this.components[component].destroy();
+    }
+
+    this.components = {};
   }
 }
